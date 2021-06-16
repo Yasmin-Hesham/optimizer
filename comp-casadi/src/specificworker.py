@@ -66,6 +66,9 @@ class SpecificWorker(GenericWorker):
         #   traceback.print_exc()
         #   print(e)
 
+        myVar = self.omnirobot_proxy.getBasePose()
+        print(myVar)
+        
         # The API of python-innermodel is not exactly the same as the C++ version
         # self.innermodel.updateTransformValues('head_rot_tilt_pose', 0, 0, 0, 1.3, 0, 0)
         # z = librobocomp_qmat.QVec(3,0)
