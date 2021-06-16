@@ -1,0 +1,13 @@
+import "OmniRobot.idsl";
+import "Laser.idsl";
+
+Component compcasadi
+{
+    Communications
+    {
+        requires OmniRobot, Laser;
+    };
+    language Python;
+    gui Qt(QWidget);
+};
+
