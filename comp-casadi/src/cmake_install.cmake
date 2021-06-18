@@ -1,4 +1,4 @@
-# Install script for directory: /home/yassmin/GSoC/optimizer/comp-casadi/src
+# Install script for directory: /home/pbustos/robocomp/components/yassmin-optimizer/comp-casadi/src
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)

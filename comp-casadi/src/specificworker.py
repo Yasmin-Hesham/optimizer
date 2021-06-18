@@ -59,30 +59,14 @@ class SpecificWorker(GenericWorker):
     @QtCore.Slot()
     def compute(self):
         print('SpecificWorker.compute...')
-        # computeCODE
-        # try:
-        #   self.differentialrobot_proxy.setSpeedBase(100, 0)
-        # except Ice.Exception as e:
-        #   traceback.print_exc()
-        #   print(e)
 
-        myVar = self.omnirobot_proxy.getBasePose()
+        myVar = self.omnirobot_proxy.getBaseState()
         print(myVar)
-        
-        # The API of python-innermodel is not exactly the same as the C++ version
-        # self.innermodel.updateTransformValues('head_rot_tilt_pose', 0, 0, 0, 1.3, 0, 0)
-        # z = librobocomp_qmat.QVec(3,0)
-        # r = self.innermodel.transform('rgbd', z, 'laser')
-        # r.printvector('d')
-        # print(r[0], r[1], r[2])
 
         return True
 
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
-
-
-
 
     ######################
     # From the RoboCompLaser you can call this methods:
