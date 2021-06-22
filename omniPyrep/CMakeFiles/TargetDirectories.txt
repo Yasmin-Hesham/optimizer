@@ -1,5 +1,0 @@
-/home/yassmin/GSoC/optimizer/omniPyrep/CMakeFiles/rebuild_cache.dir
-/home/yassmin/GSoC/optimizer/omniPyrep/CMakeFiles/edit_cache.dir
-/home/yassmin/GSoC/optimizer/omniPyrep/src/CMakeFiles/rebuild_cache.dir
-/home/yassmin/GSoC/optimizer/omniPyrep/src/CMakeFiles/edit_cache.dir
-/home/yassmin/GSoC/optimizer/omniPyrep/src/CMakeFiles/ICES__home_yassmin_GSoC_optimizer_omniPyrep_src.dir
