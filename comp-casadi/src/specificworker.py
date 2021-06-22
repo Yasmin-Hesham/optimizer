@@ -23,20 +23,21 @@ from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
 from rich.console import Console
 from genericworker import *
+from MPCModel import *
 
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
-
 
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # import librobocomp_qmat
 # import librobocomp_osgviewer
 # import librobocomp_innermodel
 
-
-class SpecificWorker(GenericWorker):
+class SpecificWorker(GenericWorker):    
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
+        
+        self.controller = MPC()
         self.Period = 2000
         if startup_check:
             self.startup_check()
@@ -60,10 +61,20 @@ class SpecificWorker(GenericWorker):
     def compute(self):
         print('SpecificWorker.compute...')
 
-        myVar = self.omnirobot_proxy.getBaseState()
-        print(myVar)
-        mySpeeds = self.omnirobot_proxy.setSpeedBase(-100,-100,0)
-        print(mySpeeds)
+        # get current pose
+        currentPose = self.omnirobot_proxy.getBaseState()
+        print(type(currentPose), "\n")
+        print(currentPose)
+        initialState = ca.DM([currentPose.x, currentPose.z, currentPose.alpha])
+        controlState = ca.DM([currentPose.advVx, currentPose.advVz, currentPose.rotV])
+        targetState = ca.DM([0,500,0])
+
+        # calculate mpc
+        controlMPC = self.controller.compute(initialState, targetState, controlState)
+        # apply speed
+        vx, vy, w = list(controlMPC)
+        self.omnirobot_proxy.setSpeedBase(vx, vy, w)
+        print(vx, vy, w)
 
         return True
 
