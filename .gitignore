@@ -1,0 +1,7 @@
+**/.vscode/
+**/__MACOSX/
+**/__pycache__/*.pyc
+**/src/CMakeFiles/
+**/Makefile
+**/src/cmake_install.cmake
+**/CMakeCache.txt

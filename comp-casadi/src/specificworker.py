@@ -62,6 +62,8 @@ class SpecificWorker(GenericWorker):
 
         myVar = self.omnirobot_proxy.getBaseState()
         print(myVar)
+        mySpeeds = self.omnirobot_proxy.setSpeedBase(-100,-100,0)
+        print(mySpeeds)
 
         return True
 

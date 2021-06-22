@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/pbustos/robocomp/components/yassmin-optimizer/omniPyrep
+CMAKE_SOURCE_DIR = /home/yassmin/GSoC/optimizer/omniPyrep
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/pbustos/robocomp/components/yassmin-optimizer/omniPyrep
+CMAKE_BINARY_DIR = /home/yassmin/GSoC/optimizer/omniPyrep
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/pbustos/robocomp/components/yassmin-optimizer/omniPyrep/CMakeFiles /home/pbustos/robocomp/components/yassmin-optimizer/omniPyrep/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yassmin/GSoC/optimizer/omniPyrep/CMakeFiles /home/yassmin/GSoC/optimizer/omniPyrep/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/pbustos/robocomp/components/yassmin-optimizer/omniPyrep/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/yassmin/GSoC/optimizer/omniPyrep/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -111,17 +111,17 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src
+# Target rules for targets named ICES__home_yassmin_GSoC_optimizer_omniPyrep_src
 
 # Build rule for target.
-ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src
-.PHONY : ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src
+ICES__home_yassmin_GSoC_optimizer_omniPyrep_src: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 ICES__home_yassmin_GSoC_optimizer_omniPyrep_src
+.PHONY : ICES__home_yassmin_GSoC_optimizer_omniPyrep_src
 
 # fast build rule for target.
-ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src/fast:
-	$(MAKE) -f src/CMakeFiles/ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src.dir/build.make src/CMakeFiles/ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src.dir/build
-.PHONY : ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src/fast
+ICES__home_yassmin_GSoC_optimizer_omniPyrep_src/fast:
+	$(MAKE) -f src/CMakeFiles/ICES__home_yassmin_GSoC_optimizer_omniPyrep_src.dir/build.make src/CMakeFiles/ICES__home_yassmin_GSoC_optimizer_omniPyrep_src.dir/build
+.PHONY : ICES__home_yassmin_GSoC_optimizer_omniPyrep_src/fast
 
 # Help Target
 help:
@@ -131,7 +131,7 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... ICES__home_pbustos_robocomp_components_yassmin-optimizer_omniPyrep_src"
+	@echo "... ICES__home_yassmin_GSoC_optimizer_omniPyrep_src"
 .PHONY : help
 
 
