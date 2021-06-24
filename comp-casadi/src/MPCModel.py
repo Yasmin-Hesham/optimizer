@@ -88,9 +88,10 @@ solver = ca.nlpsol('solver', 'ipopt', nlp_prob, options)
 
 #######################################################
 
+
 class MPC:
-    X0 = ca.DM.zeros((n_states, N+1))
-    U0 = ca.DM.zeros((n_controls, N))
+    X0 = ca.DM.zeros((n_states * (N+1), 1))
+    U0 = ca.DM.zeros((n_controls * N, 1))
 
     def compute(self, initial_state, target_state, initial_controls):
         args['p'] = ca.vertcat(
@@ -115,7 +116,7 @@ class MPC:
 
         args['x0'] = ca.vertcat(
             self.X0,
-            self.U0,
+            self.U0
         )
 
         sol = solver(
