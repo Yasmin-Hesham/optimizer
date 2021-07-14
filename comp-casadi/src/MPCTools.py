@@ -3,16 +3,15 @@ from casadi import sin, cos, pi
  
 ''' Constants '''
 # Costs
-Q_x = 10
-Q_y = 10
-Q_theta = 5
+Q_x = 50
+Q_y = 50
+Q_theta = 50
 R1 = R2 = R3 = 0.5     # speed cost
 A1 = A2 = A3 = 0       # No Acceleration
  
 # MPC parameters
 sampling_time = 2     # time between steps in seconds
 N = 100               # number of look ahead steps
-sim_time = 200        # simulation time
  
 # MPC limits
 # TODO: 1- set limits, 2- make sure of units
@@ -24,7 +23,7 @@ theta_min = -ca.inf
 theta_max = ca.inf
 vx_max =  300    # mm/sec
 vy_max =  300    # mm/sec
-w_max = 0        # rad/sec
+w_max = 1.5      # rad/sec
 # a_max =  ca.inf    # rad/s^2
  
 ''' Symbols '''

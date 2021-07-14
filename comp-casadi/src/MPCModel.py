@@ -13,9 +13,9 @@ P = ca.SX.sym('P', n_states + n_states + n_controls)
 cost_fn = 0  # initialize cost
 # accumulate state-error cost
 for i in range(N):
-    # state_error = state - target_state
+    #state_error = state - target_state
     state_error = X[:, i] - P[n_states: n_states*2]
-    # state_error[2, 0] = ca.mod(state_error[2, 0] + pi, 2*pi) - pi  # error in angle is the shortest arc
+    state_error[2, 0] = ca.mod(state_error[2, 0] + pi, 2*pi) - pi  # error in angle is the shortest arc
     # add the weighted state error to the total cost
     cost_fn += state_error.T @ Q @ state_error
 

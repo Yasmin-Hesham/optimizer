@@ -68,6 +68,7 @@ class SpecificWorker(GenericWorker):
         currentPose = self.omnirobot_proxy.getBaseState()
         # print(type(currentPose), "\n")
         # print(currentPose)
+        
         rotMat = np.array([
             [cos(-currentPose.alpha), -sin(-currentPose.alpha), 0],
             [sin(-currentPose.alpha),  cos(-currentPose.alpha), 0],
@@ -76,7 +77,7 @@ class SpecificWorker(GenericWorker):
  
         initialState = ca.DM([currentPose.x, currentPose.z, currentPose.alpha])
         controlState = rotMat @ ca.DM([[currentPose.advVx, currentPose.advVz, currentPose.rotV]]).T
-        targetState = ca.DM([1800,200,0])
+        targetState = ca.DM([1000,-800,pi/4])
  
         # calculate mpc in world frame
         controlMPC = self.controller.compute(initialState, targetState, controlState)
