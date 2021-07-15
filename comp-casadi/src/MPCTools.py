@@ -3,14 +3,14 @@ from casadi import sin, cos, pi
  
 ''' Constants '''
 # Costs
-Q_x = 50
-Q_y = 50
-Q_theta = 50
+Q_x = 150
+Q_y = 150
+Q_theta = 850
 R1 = R2 = R3 = 0.5     # speed cost
-A1 = A2 = A3 = 0       # No Acceleration
+A1 = A2 = A3 = 0       # Acceleration
  
 # MPC parameters
-sampling_time = 2     # time between steps in seconds
+sampling_time = 0.5   # time between steps in seconds
 N = 100               # number of look ahead steps
  
 # MPC limits

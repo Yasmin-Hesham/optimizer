@@ -40,7 +40,7 @@ class SpecificWorker(GenericWorker):
         super(SpecificWorker, self).__init__(proxy_map)
         
         self.controller = MPC()
-        self.Period = 2000
+        self.Period = 500                     # time in ms
         if startup_check:
             self.startup_check()
         else:
