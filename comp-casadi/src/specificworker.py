@@ -77,7 +77,7 @@ class SpecificWorker(GenericWorker):
  
         initialState = ca.DM([currentPose.x, currentPose.z, currentPose.alpha])
         controlState = rotMat @ ca.DM([[currentPose.advVx, currentPose.advVz, currentPose.rotV]]).T
-        targetState = ca.DM([1000,-800,pi/4])
+        targetState = ca.DM([1800,-200,np.pi/2])
  
         # calculate mpc in world frame
         controlMPC = self.controller.compute(initialState, targetState, controlState)

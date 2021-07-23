@@ -5,13 +5,13 @@ from casadi import sin, cos, pi
 # Costs
 Q_x = 150
 Q_y = 150
-Q_theta = 850
+Q_theta = 3000
 R1 = R2 = R3 = 0.5     # speed cost
 A1 = A2 = A3 = 0       # Acceleration
  
 # MPC parameters
-sampling_time = 0.5   # time between steps in seconds
-N = 100               # number of look ahead steps
+sampling_time = 1   # time between steps in seconds
+N = 100             # number of look ahead steps
  
 # MPC limits
 # TODO: 1- set limits, 2- make sure of units
@@ -84,11 +84,11 @@ ubx[1: n_states*(N+1): n_states] = y_max      # Y upper bound
 ubx[2: n_states*(N+1): n_states] = theta_max  # theta upper bound
  
 # control lower bounds
-lbx[n_states*(N+1)+0:: n_controls] = -vx_max  # Vx lower bound
+lbx[n_states*(N+1)+0:: n_controls] = 0  # Vx lower bound
 lbx[n_states*(N+1)+1:: n_controls] = -vy_max  # Vy lower bound
 lbx[n_states*(N+1)+2:: n_controls] = -w_max   # w lower bound
  
 # control upper bounds
-ubx[n_states*(N+1)+0:: n_controls] = vx_max   # Vx upper bound 
+ubx[n_states*(N+1)+0:: n_controls] = 0   # Vx upper bound 
 ubx[n_states*(N+1)+1:: n_controls] = vy_max   # Vy upper bound
 ubx[n_states*(N+1)+2:: n_controls] = w_max    # w upper bound
