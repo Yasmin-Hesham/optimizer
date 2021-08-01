@@ -15,10 +15,10 @@ N = 100             # number of look ahead steps
  
 # MPC limits
 # TODO: 1- set limits, 2- make sure of units
-x_min = -ca.inf
-x_max = ca.inf
-y_min = -ca.inf
-y_max = ca.inf
+x_min = -2000
+x_max = 2000
+y_min = -2000
+y_max = 2000
 theta_min = -ca.inf
 theta_max = ca.inf
 vx_max =  300    # mm/sec
@@ -84,11 +84,11 @@ ubx[1: n_states*(N+1): n_states] = y_max      # Y upper bound
 ubx[2: n_states*(N+1): n_states] = theta_max  # theta upper bound
  
 # control lower bounds
-lbx[n_states*(N+1)+0:: n_controls] = 0  # Vx lower bound
+lbx[n_states*(N+1)+0:: n_controls] = -vx_max  # Vx lower bound
 lbx[n_states*(N+1)+1:: n_controls] = -vy_max  # Vy lower bound
 lbx[n_states*(N+1)+2:: n_controls] = -w_max   # w lower bound
  
 # control upper bounds
-ubx[n_states*(N+1)+0:: n_controls] = 0   # Vx upper bound 
+ubx[n_states*(N+1)+0:: n_controls] = vx_max   # Vx upper bound 
 ubx[n_states*(N+1)+1:: n_controls] = vy_max   # Vy upper bound
 ubx[n_states*(N+1)+2:: n_controls] = w_max    # w upper bound

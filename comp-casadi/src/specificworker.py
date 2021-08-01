@@ -78,9 +78,9 @@ class SpecificWorker(GenericWorker):
         initialState = ca.DM([currentPose.x, currentPose.z, currentPose.alpha])
         controlState = rotMat @ ca.DM([[currentPose.advVx, currentPose.advVz, currentPose.rotV]]).T
         targetState = ca.DM([1800,-200,np.pi/2])
- 
+
         # calculate mpc in world frame
-        controlMPC = self.controller.compute(initialState, targetState, controlState)
+        controlMPC = self.controller.compute(initialState, targetState, controlState, isDifferential=True)
         # apply speed
         vx, vy, w = list(np.array(controlMPC.full()).flatten()) # TODO: move into class
         self.omnirobot_proxy.setSpeedBase(vx, vy, w)

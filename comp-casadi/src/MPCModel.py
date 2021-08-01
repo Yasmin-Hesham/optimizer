@@ -46,7 +46,7 @@ for i in range(N):
     k4 = derivatives(state + sampling_time * k3, controls)
     predicted_state = state + (sampling_time / 6) * (k1 + k2*2 + k3*2 + k4)
 
-    # add constraint: next_state == predicted_state
+    # add constraint for meccanum wheeled: next_state == predicted_state
     g = ca.vertcat(g, next_state - predicted_state)
     lbg = ca.vertcat(lbg, [0] * n_states)
     ubg = ca.vertcat(ubg, [0] * n_states)
@@ -93,7 +93,7 @@ class MPC:
     X0 = ca.DM.zeros((n_states * (N+1), 1))
     U0 = ca.DM.zeros((n_controls * N, 1))
 
-    def compute(self, initial_state, target_state, initial_controls):
+    def compute(self, initial_state, target_state, initial_controls, isDifferential=False):
         args['p'] = ca.vertcat(
             initial_state,          # current state
             target_state,           # target state
@@ -119,6 +119,15 @@ class MPC:
             self.U0
         )
 
+        if isDifferential:
+            args['lbx'][n_states*(N+1)+0:: n_controls] = 0
+            args['ubx'][n_states*(N+1)+0:: n_controls] = 0
+        
+        else:
+            args['lbx'][n_states*(N+1)+0:: n_controls] = -vx_max
+            args['ubx'][n_states*(N+1)+0:: n_controls] = vx_max
+            
+        
         sol = solver(
             x0=args['x0'],
             lbx=args['lbx'],
@@ -127,7 +136,6 @@ class MPC:
             ubg=args['ubg'],
             p=args['p']
         )
-
         self.X0 = sol['x'][:n_states * (N+1)]
         self.U0 = sol['x'][n_states * (N+1):]
 
