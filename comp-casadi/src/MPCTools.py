@@ -1,5 +1,6 @@
 import casadi as ca
 from casadi import sin, cos, pi
+import numpy as np
  
 ''' Constants '''
 # Costs
@@ -8,24 +9,57 @@ Q_y = 150
 Q_theta = 3000
 R1 = R2 = R3 = 0.5     # speed cost
 A1 = A2 = A3 = 0       # Acceleration
+H = 1000               # path parameter cost
  
 # MPC parameters
 sampling_time = 1   # time between steps in seconds
 N = 100             # number of look ahead steps
- 
+
 # MPC limits
-# TODO: 1- set limits, 2- make sure of units
-x_min = -2000
-x_max = 2000
-y_min = -2000
-y_max = 2000
+x_min = -2000    # mm
+x_max = 2000     # mm
+y_min = -2000    # mm
+y_max = 2000     # mm
 theta_min = -ca.inf
 theta_max = ca.inf
 vx_max =  300    # mm/sec
 vy_max =  300    # mm/sec
 w_max = 1.5      # rad/sec
 # a_max =  ca.inf    # rad/s^2
- 
+
+
+''' Path Tracking '''
+import numpy as np
+import casadi as ca
+points = np.array([
+    [ 1700,     0, 0],
+    [ 1700, -1700, 0],
+    [-1700, -1700, 0],
+    [-1700,     0, 0],
+    [    0,     0, 0]
+])
+
+num_points = points.shape[0]
+k = np.linspace(0, 1, num_points)  # path parameter
+order = 7
+x_coeffs = np.polyfit(k, points[:, 0], order)
+# x_gen = np.poly1d(x_k)
+
+y_coeffs = np.polyfit(k, points[:, 1], order)
+# y_gen = np.poly1d(y_k)
+
+def path_poly(sym, coeffs):
+    poly = 0
+    for i in range(len(coeffs)):
+        poly += coeffs[i] * (sym**i)
+    return poly
+
+# import matplotlib.pyplot as plt
+# plt.plot(points[:, 0], points[:,   1]); plt.show()
+# plt.plot(k, points[:, 0], k, x_gen(k)); plt.show()
+# plt.plot(k, points[:, 1], k, y_gen(k)); plt.show()
+# plt.plot(x_gen(k), y_gen(k)); plt.show()
+
 ''' Symbols '''
 # state symbolic variables
 x = ca.SX.sym('x')
@@ -67,7 +101,8 @@ rot_3d_z = ca.vertcat(
 state_change_rate = rot_3d_z @ controls
  
 derivatives = ca.Function('derivatives', [states, controls], [state_change_rate])
- 
+
+
 ''' Defining Upper and Lower Bounds '''
 # initialize boundaries arrays
 lbx = ca.DM.zeros((n_states*(N+1) + n_controls*N, 1))

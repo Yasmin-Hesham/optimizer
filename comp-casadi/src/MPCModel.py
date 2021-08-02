@@ -6,6 +6,8 @@ import numpy as np
 X = ca.SX.sym('X', n_states, N+1)
 # controls: matrix containing all control actions over all time steps (each column is an action vector)
 U = ca.SX.sym('U', n_controls, N)
+# path parameter: TODO: write comment
+K = ca.SX.sym('K', 1, N)
 # parameters: column vector for storing initial state, target state and initial controls
 P = ca.SX.sym('P', n_states + n_states + n_controls)
 
@@ -14,7 +16,7 @@ cost_fn = 0  # initialize cost
 # accumulate state-error cost
 for i in range(N):
     #state_error = state - target_state
-    state_error = X[:, i] - P[n_states: n_states*2]
+    state_error = X[:, i] - P[n_states: n_states*2]#
     # state_error[2, 0] = ca.mod(state_error[2, 0] + pi, 2*pi) - pi  # error in angle is the shortest arc
     # add the weighted state error to the total cost
     cost_fn += state_error.T @ Q @ state_error
@@ -24,6 +26,12 @@ for i in range(N):
     control_error = U[:, i]  # control_error = control - (target_control=0)
     # add the weighted control error to the total cost
     cost_fn += control_error.T @ R @ control_error
+
+# accumulate path tracking cost
+for i in range(N):
+    path_error = 1 - K[:, i]
+    cost_fn += path_error.T @ H @ path_error
+    
 
 ''' Constructing constraints '''
 g = ca.SX()    # initialize contraints vector
@@ -50,6 +58,18 @@ for i in range(N):
     g = ca.vertcat(g, next_state - predicted_state)
     lbg = ca.vertcat(lbg, [0] * n_states)
     ubg = ca.vertcat(ubg, [0] * n_states)
+
+for i in range(N):
+    # x = c[0] * k**0 + c[1] * k**1 + c[2] * k**2 + ... + c[7] * k**7
+    polynomial = path_poly(K[0, i], x_coeffs)
+    g = ca.vertcat(g, polynomial - X[0, i])
+    lbg = ca.vertcat(lbg, [0])
+    ubg = ca.vertcat(ubg, [0])
+
+    polynomial = path_poly(K[0, i], y_coeffs)
+    g = ca.vertcat(g, polynomial - X[1, i])
+    lbg = ca.vertcat(lbg, [0])
+    ubg = ca.vertcat(ubg, [0])
 
 # TODO: add dynamic obstacles
 
