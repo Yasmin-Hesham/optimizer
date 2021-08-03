@@ -27,38 +27,12 @@ vy_max =  300    # mm/sec
 w_max = 1.5      # rad/sec
 # a_max =  ca.inf    # rad/s^2
 
-
 ''' Path Tracking '''
-import numpy as np
-import casadi as ca
-points = np.array([
-    [ 1700,     0, 0],
-    [ 1700, -1700, 0],
-    [-1700, -1700, 0],
-    [-1700,     0, 0],
-    [    0,     0, 0]
-])
-
-num_points = points.shape[0]
-k = np.linspace(0, 1, num_points)  # path parameter
 order = 7
-x_coeffs = np.polyfit(k, points[:, 0], order)
-# x_gen = np.poly1d(x_k)
-
-y_coeffs = np.polyfit(k, points[:, 1], order)
-# y_gen = np.poly1d(y_k)
-
 def path_poly(sym, coeffs):
     poly = 0
     for i in range(len(coeffs)):
         poly += coeffs[i] * (sym**i)
-    return poly
-
-# import matplotlib.pyplot as plt
-# plt.plot(points[:, 0], points[:,   1]); plt.show()
-# plt.plot(k, points[:, 0], k, x_gen(k)); plt.show()
-# plt.plot(k, points[:, 1], k, y_gen(k)); plt.show()
-# plt.plot(x_gen(k), y_gen(k)); plt.show()
 
 ''' Symbols '''
 # state symbolic variables

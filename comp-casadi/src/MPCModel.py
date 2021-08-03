@@ -8,18 +8,26 @@ X = ca.SX.sym('X', n_states, N+1)
 U = ca.SX.sym('U', n_controls, N)
 # path parameter: TODO: write comment
 K = ca.SX.sym('K', 1, N)
-# parameters: column vector for storing initial state, target state and initial controls
-P = ca.SX.sym('P', n_states + n_states + n_controls)
+# parameters: column vector for storing initial state, target state, initial controls and path tracking 
+P = ca.SX.sym('P', (n_states+n_controls) + 1 + (order+1)*2)
 
 ''' Constructing cost function '''
 cost_fn = 0  # initialize cost
 # accumulate state-error cost
 for i in range(N):
     #state_error = state - target_state
-    state_error = X[:, i] - P[n_states: n_states*2]#
-    # state_error[2, 0] = ca.mod(state_error[2, 0] + pi, 2*pi) - pi  # error in angle is the shortest arc
-    # add the weighted state error to the total cost
-    cost_fn += state_error.T @ Q @ state_error
+    pathX_error = X[0, i+1] - path_poly(
+                                        K[i], 
+                                        P[n_states+n_controls+1 : n_states+n_controls+1+(order+1)]
+                                       )
+    pathY_error = X[1, i+1] - path_poly(
+                                        K[i], 
+                                        P[n_states+n_controls+1+(order+1):]
+                                        )
+    # pathTheta_error = X[2, i+1] - P[2*n_states - 1]
+    # add the weighted pathX error to the total cost
+    cost_fn += pathX_error.T @ Q_x @ pathX_error
+    cost_fn += pathY_error.T @ Q_y @ pathY_error
 
 # accumulate control-error cost
 for i in range(N):
@@ -31,7 +39,7 @@ for i in range(N):
 for i in range(N):
     path_error = 1 - K[:, i]
     cost_fn += path_error.T @ H @ path_error
-    
+
 
 ''' Constructing constraints '''
 g = ca.SX()    # initialize contraints vector
@@ -39,9 +47,12 @@ lbg = ca.DM()  # initialize lowerbounds vector
 ubg = ca.DM()  # initialize upperbounds vector
 
 # adding physical constraints (next state must adhere to the robot model)
-g = ca.vertcat(g, X[:, 0] - P[:n_states])  # constraints in the equation
-lbg = ca.vertcat(lbg, [0] * n_states)
-ubg = ca.vertcat(ubg, [0] * n_states)
+g = ca.vertcat(g, X[:, 0] - P[:n_states])                                    # constraints in the equation
+g = ca.vertcat(g, K[:, 0] - P[n_states+n_controls : n_states+n_controls+1])  # const[:n_statesraints in the equation
+lbg = ca.vertcat(lbg, [0] * (n_states+1))
+ubg = ca.vertcat(ubg, [0] * (n_states+1))
+# TODO: check if we need to add constraints for poly in X and y
+
 for i in range(N):
     state = X[:, i]
     controls = U[:, i]
@@ -59,24 +70,13 @@ for i in range(N):
     lbg = ca.vertcat(lbg, [0] * n_states)
     ubg = ca.vertcat(ubg, [0] * n_states)
 
-for i in range(N):
-    # x = c[0] * k**0 + c[1] * k**1 + c[2] * k**2 + ... + c[7] * k**7
-    polynomial = path_poly(K[0, i], x_coeffs)
-    g = ca.vertcat(g, polynomial - X[0, i])
-    lbg = ca.vertcat(lbg, [0])
-    ubg = ca.vertcat(ubg, [0])
-
-    polynomial = path_poly(K[0, i], y_coeffs)
-    g = ca.vertcat(g, polynomial - X[1, i])
-    lbg = ca.vertcat(lbg, [0])
-    ubg = ca.vertcat(ubg, [0])
-
 # TODO: add dynamic obstacles
 
 ''' Creating the NLP Solver '''
 optimization_variables = ca.vertcat(
     X.reshape((-1, 1)),   # Example: 3x11 ---> 33x1 where 3=states, 11=N+1
-    U.reshape((-1, 1))
+    U.reshape((-1, 1)),
+    K.reshape((-1, 1))
 )
 
 nlp_prob = {
@@ -112,12 +112,15 @@ solver = ca.nlpsol('solver', 'ipopt', nlp_prob, options)
 class MPC:
     X0 = ca.DM.zeros((n_states * (N+1), 1))
     U0 = ca.DM.zeros((n_controls * N, 1))
+    K0 = ca.DM.zeros((N, 1))
 
-    def compute(self, initial_state, target_state, initial_controls, isDifferential=False):
+    def compute(self, initial_state, initial_controls, x_coeffs, y_coeffs, isDifferential=False):
         args['p'] = ca.vertcat(
             initial_state,          # current state
-            target_state,           # target state
-            self.U0[:n_controls]    # current controls
+            self.U0[:n_controls],   # current controls
+            self.K0[1],             # current path parameter
+            x_coeffs,               # coefficients of x in path in terms of k
+            y_coeffs                # coefficients of y in path in terms of k
         )
 
         # optimization variable current state
@@ -134,20 +137,23 @@ class MPC:
         self.U0[:-n_controls] = self.U0[n_controls:]
         self.U0[-n_controls:] = self.U0[-2*n_controls:-n_controls]
 
+        self.K0[:-1] = self.K0[1:]
+        self.K0[-1] = self.K0[-2]
+
         args['x0'] = ca.vertcat(
             self.X0,
-            self.U0
+            self.U0,
+            self.K0
         )
 
         if isDifferential:
             args['lbx'][n_states*(N+1)+0:: n_controls] = 0
             args['ubx'][n_states*(N+1)+0:: n_controls] = 0
-        
+
         else:
             args['lbx'][n_states*(N+1)+0:: n_controls] = -vx_max
             args['ubx'][n_states*(N+1)+0:: n_controls] = vx_max
-            
-        
+
         sol = solver(
             x0=args['x0'],
             lbx=args['lbx'],
@@ -157,6 +163,7 @@ class MPC:
             p=args['p']
         )
         self.X0 = sol['x'][:n_states * (N+1)]
-        self.U0 = sol['x'][n_states * (N+1):]
+        self.U0 = sol['x'][n_states * (N+1) : (n_states * (N+1)) + (n_controls * N)]
+        self.K0 = sol['x'][(n_states * (N+1)) + (n_controls * N):]
 
         return self.U0[:n_controls]

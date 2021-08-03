@@ -18,7 +18,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
 #
- 
+
 from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QApplication
 from rich.console import Console
@@ -26,19 +26,20 @@ from genericworker import *
 from MPCModel import *
 import numpy as np
 from time import time
- 
+
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
- 
+
 # If RoboComp was compiled with Python bindings you can use InnerModel in Python
 # import librobocomp_qmat
 # import librobocomp_osgviewer
 # import librobocomp_innermodel
- 
-class SpecificWorker(GenericWorker):    
+
+
+class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
         super(SpecificWorker, self).__init__(proxy_map)
-        
+
         self.controller = MPC()
         self.Period = 500                     # time in ms
         if startup_check:
@@ -46,10 +47,10 @@ class SpecificWorker(GenericWorker):
         else:
             self.timer.timeout.connect(self.compute)
             self.timer.start(self.Period)
- 
+
     def __del__(self):
         console.print('SpecificWorker destructor')
- 
+
     def setParams(self, params):
         # try:
         #   self.innermodel = InnerModel(params["InnerModelPath"])
@@ -57,55 +58,72 @@ class SpecificWorker(GenericWorker):
         #   traceback.print_exc()
         #   print("Error reading config params")
         return True
- 
- 
+
     @QtCore.Slot()
     def compute(self):
         tic = time()
         print('SpecificWorker.compute...')
- 
+
         # get current pose in world frame
         currentPose = self.omnirobot_proxy.getBaseState()
         # print(type(currentPose), "\n")
         # print(currentPose)
-        
+
         rotMat = np.array([
             [cos(-currentPose.alpha), -sin(-currentPose.alpha), 0],
             [sin(-currentPose.alpha),  cos(-currentPose.alpha), 0],
-            [0                      ,  0                      , 1]
+            [0,  0, 1]
         ])
- 
-        initialState = ca.DM([currentPose.x, currentPose.z, currentPose.alpha])
-        controlState = rotMat @ ca.DM([[currentPose.advVx, currentPose.advVz, currentPose.rotV]]).T
-        targetState = ca.DM([1800,-200,np.pi/2])
 
+        points = np.array([
+            [1700,      0,  0],
+            [1700,  -1700,  0],
+            [-1700, -1700,  0],
+            [-1700,     0,  0],
+            [0,         0,  0]
+        ])
+        num_points = points.shape[0]
+        k = np.linspace(0, 1, num_points)  
+        x_coeffs = np.polyfit(k, points[:, 0], order)
+        y_coeffs = np.polyfit(k, points[:, 1], order)
+
+        k = np.linspace(0, 1, num_points)  # path parameter
+
+        initialState = ca.DM([currentPose.x, currentPose.z, currentPose.alpha])
+        controlState = rotMat @ ca.DM([[currentPose.advVx,
+                                        currentPose.advVz, currentPose.rotV]]).T
+        targetState = ca.DM([1800, -200, np.pi/2])
+
+        # TODO: x_coeffs and y_coeffs
         # calculate mpc in world frame
-        controlMPC = self.controller.compute(initialState, targetState, controlState, isDifferential=True)
+        controlMPC = self.controller.compute(
+            initialState, targetState, x_coeffs, y_coeffs, controlState, isDifferential=True)
         # apply speed
-        vx, vy, w = list(np.array(controlMPC.full()).flatten()) # TODO: move into class
+        vx, vy, w = list(np.array(controlMPC.full()).flatten()
+                         )  # TODO: move into class
         self.omnirobot_proxy.setSpeedBase(vx, vy, w)
-        
-        #print(f"Time Elapsed = {time() - tic}")
+
+        # print(f"Time Elapsed = {time() - tic}")
         print(initialState)
         print(controlState)
         print(vx, vy, w)
- 
+
         return True
- 
+
     def startup_check(self):
         QTimer.singleShot(200, QApplication.instance().quit)
- 
+
     ######################
     # From the RoboCompLaser you can call this methods:
     # self.laser_proxy.getLaserAndBStateData(...)
     # self.laser_proxy.getLaserConfData(...)
     # self.laser_proxy.getLaserData(...)
- 
+
     ######################
     # From the RoboCompLaser you can use this types:
     # RoboCompLaser.LaserConfData
     # RoboCompLaser.TData
- 
+
     ######################
     # From the RoboCompOmniRobot you can call this methods:
     # self.omnirobot_proxy.correctOdometer(...)
@@ -116,7 +134,7 @@ class SpecificWorker(GenericWorker):
     # self.omnirobot_proxy.setOdometerPose(...)
     # self.omnirobot_proxy.setSpeedBase(...)
     # self.omnirobot_proxy.stopBase(...)
- 
+
     ######################
     # From the RoboCompOmniRobot you can use this types:
     # RoboCompOmniRobot.TMechParams
