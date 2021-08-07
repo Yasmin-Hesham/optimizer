@@ -9,19 +9,19 @@ U = ca.SX.sym('U', n_controls, N)
 # path parameter: TODO: write comment
 K = ca.SX.sym('K', 1, N)
 # parameters: column vector for storing initial state, target state, initial controls and path tracking 
-P = ca.SX.sym('P', (n_states+n_controls) + 1 + (order+1)*2)
+P = ca.SX.sym('P', (n_states+n_controls) + (order+1)*2)
 
 ''' Constructing cost function '''
 cost_fn = 0  # initialize cost
 # accumulate state-error cost
 for i in range(N):
     #state_error = state - target_state
-    pathX_error = X[0, i+1] - path_poly(
-                                        K[i], 
+    pathX_error = X[0, i] - path_poly(
+                                        K[0, i], 
                                         P[n_states+n_controls+1 : n_states+n_controls+1+(order+1)]
                                        )
-    pathY_error = X[1, i+1] - path_poly(
-                                        K[i], 
+    pathY_error = X[1, i] - path_poly(
+                                        K[0, i], 
                                         P[n_states+n_controls+1+(order+1):]
                                         )
     # pathTheta_error = X[2, i+1] - P[2*n_states - 1]
@@ -39,7 +39,7 @@ for i in range(N):
 for i in range(N):
     path_error = 1 - K[:, i]
     cost_fn += path_error.T @ H @ path_error
-
+ 
 
 ''' Constructing constraints '''
 g = ca.SX()    # initialize contraints vector
@@ -48,9 +48,9 @@ ubg = ca.DM()  # initialize upperbounds vector
 
 # adding physical constraints (next state must adhere to the robot model)
 g = ca.vertcat(g, X[:, 0] - P[:n_states])                                    # constraints in the equation
-g = ca.vertcat(g, K[:, 0] - P[n_states+n_controls : n_states+n_controls+1])  # const[:n_statesraints in the equation
-lbg = ca.vertcat(lbg, [0] * (n_states+1))
-ubg = ca.vertcat(ubg, [0] * (n_states+1))
+# g = ca.vertcat(g, K[:, 0] - P[n_states+n_controls : n_states+n_controls+1])  # const[:n_statesraints in the equation
+lbg = ca.vertcat(lbg, [0] * (n_states))
+ubg = ca.vertcat(ubg, [0] * (n_states))
 # TODO: check if we need to add constraints for poly in X and y
 
 for i in range(N):
@@ -118,7 +118,6 @@ class MPC:
         args['p'] = ca.vertcat(
             initial_state,          # current state
             self.U0[:n_controls],   # current controls
-            self.K0[1],             # current path parameter
             x_coeffs,               # coefficients of x in path in terms of k
             y_coeffs                # coefficients of y in path in terms of k
         )
@@ -165,5 +164,6 @@ class MPC:
         self.X0 = sol['x'][:n_states * (N+1)]
         self.U0 = sol['x'][n_states * (N+1) : (n_states * (N+1)) + (n_controls * N)]
         self.K0 = sol['x'][(n_states * (N+1)) + (n_controls * N):]
+        print(self.K0)
 
         return self.U0[:n_controls]

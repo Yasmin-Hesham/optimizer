@@ -26,6 +26,7 @@ from genericworker import *
 from MPCModel import *
 import numpy as np
 from time import time
+import warnings  
 
 sys.path.append('/opt/robocomp/lib')
 console = Console(highlight=False)
@@ -35,6 +36,7 @@ console = Console(highlight=False)
 # import librobocomp_osgviewer
 # import librobocomp_innermodel
 
+warnings.simplefilter('ignore', np.RankWarning)
 
 class SpecificWorker(GenericWorker):
     def __init__(self, proxy_map, startup_check=False):
@@ -76,28 +78,25 @@ class SpecificWorker(GenericWorker):
         ])
 
         points = np.array([
-            [1700,      0,  0],
-            [1700,  -1700,  0],
+            [ 1700,     0,  0],
+            [ 1700, -1700,  0],
             [-1700, -1700,  0],
             [-1700,     0,  0],
-            [0,         0,  0]
+            [    0,     0,  0]
         ])
         num_points = points.shape[0]
-        k = np.linspace(0, 1, num_points)  
+        k = np.linspace(0, 1, num_points)
         x_coeffs = np.polyfit(k, points[:, 0], order)
         y_coeffs = np.polyfit(k, points[:, 1], order)
-
-        k = np.linspace(0, 1, num_points)  # path parameter
 
         initialState = ca.DM([currentPose.x, currentPose.z, currentPose.alpha])
         controlState = rotMat @ ca.DM([[currentPose.advVx,
                                         currentPose.advVz, currentPose.rotV]]).T
         targetState = ca.DM([1800, -200, np.pi/2])
 
-        # TODO: x_coeffs and y_coeffs
         # calculate mpc in world frame
         controlMPC = self.controller.compute(
-            initialState, targetState, x_coeffs, y_coeffs, controlState, isDifferential=True)
+            initialState, controlState, x_coeffs, y_coeffs, isDifferential=True)
         # apply speed
         vx, vy, w = list(np.array(controlMPC.full()).flatten()
                          )  # TODO: move into class

@@ -9,11 +9,11 @@ Q_y = 150
 Q_theta = 3000
 R1 = R2 = R3 = 0.5     # speed cost
 A1 = A2 = A3 = 0       # Acceleration
-H = 1000               # path parameter cost
+H = 1e5                # path parameter cost
  
 # MPC parameters
 sampling_time = 1   # time between steps in seconds
-N = 100             # number of look ahead steps
+N = 100              # number of look ahead steps
 
 # MPC limits
 x_min = -2000    # mm
@@ -31,8 +31,9 @@ w_max = 1.5      # rad/sec
 order = 7
 def path_poly(sym, coeffs):
     poly = 0
-    for i in range(len(coeffs)):
-        poly += coeffs[i] * (sym**i)
+    for i in range(coeffs.shape[0]):
+        poly += coeffs[i] * (sym**(coeffs.shape[0] - i - 1))
+    return poly
 
 ''' Symbols '''
 # state symbolic variables
@@ -79,8 +80,8 @@ derivatives = ca.Function('derivatives', [states, controls], [state_change_rate]
 
 ''' Defining Upper and Lower Bounds '''
 # initialize boundaries arrays
-lbx = ca.DM.zeros((n_states*(N+1) + n_controls*N, 1))
-ubx = ca.DM.zeros((n_states*(N+1) + n_controls*N, 1))
+lbx = ca.DM.zeros((n_states*(N+1) + n_controls*N + N, 1))
+ubx = ca.DM.zeros((n_states*(N+1) + n_controls*N + N, 1))
  
 # state lower bounds
 lbx[0: n_states*(N+1): n_states] = x_min      # X lower bound
@@ -93,11 +94,18 @@ ubx[1: n_states*(N+1): n_states] = y_max      # Y upper bound
 ubx[2: n_states*(N+1): n_states] = theta_max  # theta upper bound
  
 # control lower bounds
-lbx[n_states*(N+1)+0:: n_controls] = -vx_max  # Vx lower bound
-lbx[n_states*(N+1)+1:: n_controls] = -vy_max  # Vy lower bound
-lbx[n_states*(N+1)+2:: n_controls] = -w_max   # w lower bound
+lbx[n_states*(N+1)+0: n_states*(N+1)+ n_controls*N: n_controls] = -vx_max  # Vx lower bound
+lbx[n_states*(N+1)+1: n_states*(N+1)+ n_controls*N: n_controls] = -vy_max  # Vy lower bound
+lbx[n_states*(N+1)+2: n_states*(N+1)+ n_controls*N: n_controls] = 0   # w lower bound
  
 # control upper bounds
-ubx[n_states*(N+1)+0:: n_controls] = vx_max   # Vx upper bound 
-ubx[n_states*(N+1)+1:: n_controls] = vy_max   # Vy upper bound
-ubx[n_states*(N+1)+2:: n_controls] = w_max    # w upper bound
+ubx[n_states*(N+1)+0: n_states*(N+1)+ n_controls*N: n_controls] = vx_max   # Vx upper bound 
+ubx[n_states*(N+1)+1: n_states*(N+1)+ n_controls*N: n_controls] = vy_max   # Vy upper bound
+ubx[n_states*(N+1)+2: n_states*(N+1)+ n_controls*N: n_controls] = 0    # w upper bound
+
+# path lower bounds
+lbx[n_states*(N+1)+ n_controls*N:] = -vx_max  # Vx lower bound
+ 
+# path upper bounds
+ubx[n_states*(N+1)+ n_controls*N:] = vx_max   # Vx upper bound 
+
