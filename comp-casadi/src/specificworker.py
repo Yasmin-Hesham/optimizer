@@ -87,7 +87,7 @@ class SpecificWorker(GenericWorker):
 
         # calculate mpc in world frame
         controlMPC = self.controller.compute(
-            initialState, X_COEFFS, Y_COEFFS, isDifferential=True)
+            initialState, X_COEFFS, Y_COEFFS, isDifferential=False)
         # apply speed
         vx, vy, w = list(np.array(controlMPC.full()).flatten()
                          )  # TODO: move into class

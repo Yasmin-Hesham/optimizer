@@ -30,7 +30,8 @@ for i in range(N+1):
     # p(theta) = (K(theta), P(theta), tan-1 dp/dk)
     pathX_error = X[0, i] - path_poly(X[3, i], polyX_coeffs)
     pathY_error = X[1, i] - path_poly(X[3, i], polyY_coeffs)
-    phi_error = X[2, i] - ca.atan2(dK_dtheta[:, i], dP_dtheta[:, i])
+    # phi_error = X[2, i] - ca.atan2(dK_dtheta[:, i], dP_dtheta[:, i])
+    phi_error = X[2, i] - 0
     theta_error = X[3, i] - THETA_MAX
 
     # add the weighted path error to the total cost
@@ -49,7 +50,7 @@ for i in range(N):
     vx_error = U[0, i] -  vx_ref
 
     # vy_ref = U[3, i] * ca.sqrt(ca.power(dK_dtheta[:, i], 2) + ca.power(dP_dtheta[:, i], 2))
-    vy_ref = U[3, i] * ca.sqrt(ca.power(dK_dtheta[:, i], 2) + ca.power(dP_dtheta[:, i], 2))
+    vy_ref = 0
     vy_error = U[1, i] - vy_ref
 
     # vphi_ref = (U[3: i] * d2P_dtheta2[:, i] * dK_dtheta[:, i]) / (1 + ca.power(dP_dK[:, i], 2))

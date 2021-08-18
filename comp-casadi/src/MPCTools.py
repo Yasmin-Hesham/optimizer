@@ -9,8 +9,8 @@ Q_PHI = 1e10
 Q_THETA = 1e10
 
 R_VX = R_VY = 1e4
-R_VPHI = 1e4
-R_VTHETA = 1e-8
+R_VPHI = 1e5
+R_VTHETA = 1e10
  
 # MPC parameters
 SAMPLING_TIME = 0.5       # time between steps in seconds
@@ -18,33 +18,43 @@ N = 100                   # number of look ahead steps
 
 # MPC limits
 # States
-X_MIN = Y_MIN = -2000     # mm
-X_MAX = Y_MAX =  2000     # mm
-PHI_MIN = -ca.inf       # rad
-PHI_MAX = ca.inf        # rad
+X_MIN = Y_MIN = -2000        # mm
+X_MAX = Y_MAX =  2000        # mm
+PHI_MIN = -ca.inf            # rad
+PHI_MAX = ca.inf             # rad
 
 # Path Parameter  
 THETA_MIN = 0                # Unitless
 THETA_MAX = 100              # Unitless
 
 # Control Actions
-VX_MIN = VY_MIN = -300    # mm/sec
-VX_MAX = VY_MAX =  300    # mm/sec
+VX_MIN = VY_MIN = -300       # mm/sec
+VX_MAX = VY_MAX =  300       # mm/sec
 VPHI_MIN = -1.5              # rad/sec
 VPHI_MAX = 1.5               # rad/sec
 
 # Virtual Control
 VTHETA_MIN = 0                # Unitless
-VTHETA_MAX = 5                # Unitless
+VTHETA_MAX = 2                # Unitless
 
 ''' Path Tracking '''
+
+# |-------|
+# |       |
+# |       |
+# x       |
+#         |
+#         |
+#         |
+
 #      x     y    phi
 POINTS = np.array([
-    [-1750,    0,  0],
-    [-1750, 1750,  0],
-    [ 1750, 1750,  0],
-    [ 1750,    0,  0],
-    [    0,    0,  0],
+    [   0,    0,  0],
+    [   0, 1750,  0],
+    [1750, 1750,  0],
+    [1750,    0,  0],
+    [1750,-1750,  0],
+    [   0,-1750,  0],
 ])
 
 NUM_POINTS = POINTS.shape[0]
