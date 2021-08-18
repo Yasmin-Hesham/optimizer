@@ -1,119 +1,136 @@
-# TODO: K--> carrot and States--> donkey
-
 import casadi as ca
 from casadi import sin, cos, pi
 import numpy as np
  
-''' Constants '''
-# Costs
-Q_x = 50
-Q_y = 50
-Q_theta = 3000
-R1 = R2 = R3 = 0.5     # speed cost
-A1 = A2 = A3 = 0       # Acceleration
-H = 1e7
+''' Parameters '''
+# Cost parameters
+Q_X = Q_Y = 5e5
+Q_PHI = 1e10
+Q_THETA = 1e10
+
+R_VX = R_VY = 1e4
+R_VPHI = 1e4
+R_VTHETA = 1e-8
  
 # MPC parameters
-sampling_time = 0.5  # time between steps in seconds
-N = 100              # number of look ahead steps
+SAMPLING_TIME = 0.5       # time between steps in seconds
+N = 100                   # number of look ahead steps
 
 # MPC limits
-x_min = -2000    # mm
-x_max = 2000     # mm
-y_min = -2000    # mm
-y_max = 2000     # mm
-theta_min = -ca.inf
-theta_max = ca.inf
-vx_max =  300    # mm/sec
-vy_max =  300    # mm/sec
-w_max = 1.5      # rad/sec
-# a_max =  ca.inf    # rad/s^2
+# States
+X_MIN = Y_MIN = -2000     # mm
+X_MAX = Y_MAX =  2000     # mm
+PHI_MIN = -ca.inf       # rad
+PHI_MAX = ca.inf        # rad
+
+# Path Parameter  
+THETA_MIN = 0                # Unitless
+THETA_MAX = 100              # Unitless
+
+# Control Actions
+VX_MIN = VY_MIN = -300    # mm/sec
+VX_MAX = VY_MAX =  300    # mm/sec
+VPHI_MIN = -1.5              # rad/sec
+VPHI_MAX = 1.5               # rad/sec
+
+# Virtual Control
+VTHETA_MIN = 0                # Unitless
+VTHETA_MAX = 5                # Unitless
 
 ''' Path Tracking '''
-order = 7
+#      x     y    phi
+POINTS = np.array([
+    [-1750,    0,  0],
+    [-1750, 1750,  0],
+    [ 1750, 1750,  0],
+    [ 1750,    0,  0],
+    [    0,    0,  0],
+])
+
+NUM_POINTS = POINTS.shape[0]
+ORDER = 5
+
+SCALE = np.linspace(THETA_MIN, THETA_MAX, NUM_POINTS)
+X_COEFFS = np.polyfit(SCALE, POINTS[:, 0], ORDER+2)
+Y_COEFFS = np.polyfit(SCALE, POINTS[:, 1], ORDER)   # twice continuously differentiable
+# PHI_COEFFS = np.polyfit(SCALE, POINTS[:, 2], ORDER)
+
 def path_poly(sym, coeffs):
     poly = 0
-    for i in range(coeffs.shape[0]):
-        poly += coeffs[i] * (sym**(coeffs.shape[0] - i - 1))
+    degree = coeffs.shape[0]
+    for i in range(degree):
+        poly += coeffs[i] * ca.power(sym, (degree - 1 - i))
     return poly
 
-''' Symbols '''
+# for quick test
+x_gen = np.poly1d(X_COEFFS)
+y_gen = np.poly1d(Y_COEFFS)
+# PHI_gen = np.poly1d(y_coeffs
+# plt.plot(x_gen(k), y_gen(k), PHI_gen(k))
+# plt.show()
+
+''' Functions '''
 # state symbolic variables
 x = ca.SX.sym('x')
 y = ca.SX.sym('y')
-theta = ca.SX.sym('theta')
-k = ca.SX.sym('k')
-y_coeff = ca.SX.sym('y_coeff', order+1)
+phi = ca.SX.sym('phi')
+
 states = ca.vertcat(
     x,
     y,
-    theta
+    phi
 )
 n_states = states.numel()
- 
+
 # control symbolic variables
 V_x = ca.SX.sym('V_x')
 V_y = ca.SX.sym('V_y')
-Omega = ca.SX.sym('Omega')
+V_phi = ca.SX.sym('V_phi')
+
 controls = ca.vertcat(
     V_x,
     V_y,
-    Omega
+    V_phi
 )
 n_controls = controls.numel()
- 
-# state weights matrix (Q_X, Q_Y, Q_THETA)
-Q = ca.diagcat(Q_x, Q_y, Q_theta)
- 
-# controls weights matrix
-R = ca.diagcat(R1, R2, R3)
- 
-# acceleration weights matrix
-A = ca.diagcat(A1, A2, A3)
- 
-rot_3d_z = ca.vertcat(
-    ca.horzcat(cos(theta), -sin(theta), 0),
-    ca.horzcat(sin(theta),  cos(theta), 0),
-    ca.horzcat(         0,           0, 1)
+
+rotmat_3d_z = ca.vertcat(
+    ca.horzcat(cos(phi), -sin(phi), 0),
+    ca.horzcat(sin(phi),  cos(phi), 0),
+    ca.horzcat(       0,         0, 1)
 )
 
-state_change_rate = rot_3d_z @ controls
+state_change_rate = rotmat_3d_z @ controls
+x_dot = ca.Function('x_dot', [states, controls], [state_change_rate])
 
-derivatives = ca.Function('derivatives', [states, controls], [state_change_rate])
-
-# y = c0*k^n + c1*k^(n-1) + ... + c(n-1)*k^1 + cn*k^0
-# dy/dk = n*c0*k^(n-1) + (n-1)*c1*k^(n-2) + ... + c(n-1)*k^0 
-dydk_coeff = y_coeff[:-1] * np.arange(order, 0, -1)
-# dydk = pathpoly(k, dydk_coeff)
-# dK/dt = dK/dY * dY/dt
-# dK/dt = dY/dt / dY/dK
-k_change_rate = V_y / path_poly(k, dydk_coeff)
-dKdT = ca.Function('dKdT', [k, V_y, y_coeff], [k_change_rate])
+h_states = (n_states+1) * (N+1)
+h_controls = (n_controls+1) * N        # controls for all steps horizon
 
 ''' Defining Upper and Lower Bounds '''
 # initialize boundaries arrays
-lbx = ca.DM.zeros((n_states*(N+1) + n_controls*N + N+1, 1))
-ubx = ca.DM.zeros((n_states*(N+1) + n_controls*N + N+1, 1))
+lbx = ca.DM.zeros((h_states+h_controls, 1))
+ubx = ca.DM.zeros((h_states+h_controls, 1))
 
 # state lower bounds
-lbx[0: n_states*(N+1): n_states] = x_min      # X lower bound
-lbx[1: n_states*(N+1): n_states] = y_min      # Y lower bound
-lbx[2: n_states*(N+1): n_states] = theta_min  # theta lower bound
+lbx[0: h_states: (n_states+1)] = X_MIN      # X lower bound
+lbx[1: h_states: (n_states+1)] = Y_MIN      # Y lower bound
+lbx[2: h_states: (n_states+1)] = PHI_MIN    # PHI lower bound
+lbx[3: h_states: (n_states+1)] = THETA_MIN  # path lower bounds
+
 # state upper bounds
-ubx[0: n_states*(N+1): n_states] = x_max      # X upper bound
-ubx[1: n_states*(N+1): n_states] = y_max      # Y upper bound
-ubx[2: n_states*(N+1): n_states] = theta_max  # theta upper bound
+ubx[0: h_states: (n_states+1)] = X_MAX      # X upper bound
+ubx[1: h_states: (n_states+1)] = Y_MAX      # Y upper bound
+ubx[2: h_states: (n_states+1)] = PHI_MAX    # PHI upper bound
+ubx[3: h_states: (n_states+1)] = THETA_MAX  # path upper bounds
 
 # control lower bounds 
-lbx[n_states*(N+1)+0: n_states*(N+1)+ n_controls*N: n_controls] = -vx_max  # Vx lower bound
-lbx[n_states*(N+1)+1: n_states*(N+1)+ n_controls*N: n_controls] = -vy_max  # Vy lower bound
-lbx[n_states*(N+1)+2: n_states*(N+1)+ n_controls*N: n_controls] = -w_max   # w lower bound
-# control upper bounds
-ubx[n_states*(N+1)+0: n_states*(N+1)+ n_controls*N: n_controls] = vx_max   # Vx upper bound 
-ubx[n_states*(N+1)+1: n_states*(N+1)+ n_controls*N: n_controls] = vy_max   # Vy upper bound
-ubx[n_states*(N+1)+2: n_states*(N+1)+ n_controls*N: n_controls] = w_max   # w upper bound
+lbx[h_states+0: h_states+h_controls: (n_controls+1)] = VX_MIN       # Vx lower bound
+lbx[h_states+1: h_states+h_controls: (n_controls+1)] = VY_MIN       # Vy lower bound
+lbx[h_states+2: h_states+h_controls: (n_controls+1)] = VPHI_MIN        # Vphi lower bound
+lbx[h_states+3: h_states+h_controls: (n_controls+1)] = VTHETA_MIN   # Vtheta lower bound
 
-# path lower bounds
-lbx[n_states*(N+1)+ n_controls*N:] = 0 
-# path upper bounds
-ubx[n_states*(N+1)+ n_controls*N:] = 1  
+# control upper bounds
+ubx[h_states+0: h_states+h_controls: (n_controls+1)] = VX_MAX       # Vx upper bound 
+ubx[h_states+1: h_states+h_controls: (n_controls+1)] = VY_MAX       # Vy upper bound
+ubx[h_states+2: h_states+h_controls: (n_controls+1)] = VPHI_MAX        # Vphi upper bound
+ubx[h_states+3: h_states+h_controls: (n_controls+1)] = VTHETA_MAX   # Vtheta upper bound

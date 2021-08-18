@@ -78,25 +78,6 @@ class SpecificWorker(GenericWorker):
             [0, 0, 1]
         ])
 
-        points = np.array([
-            [    0,     0,  0],
-            [-1750,     0,  0],
-            [-1750,  1750,  0],
-            [ 1750,  1750,  0],
-            [ 1750,     0,  0],
-            [    0,     0,  0],
-        ])
-        num_points = points.shape[0]
-        k = np.linspace(0, 1, num_points)
-        x_coeffs = np.polyfit(k, points[:, 0], order)
-        y_coeffs = np.polyfit(k, points[:, 1], order)
-
-        x_gen = np.poly1d(x_coeffs)
-        y_gen = np.poly1d(y_coeffs)
-
-        plt.plot(x_gen(k), y_gen(k))
-        plt.show()
-
         initialState = ca.DM([currentPose.x, currentPose.z, currentPose.alpha])
         controlState = rotMat @ ca.DM([[currentPose.advVx,
                                         currentPose.advVz, currentPose.rotV]]).T
@@ -106,16 +87,16 @@ class SpecificWorker(GenericWorker):
 
         # calculate mpc in world frame
         controlMPC = self.controller.compute(
-            initialState, controlState, x_coeffs, y_coeffs, isDifferential=False)
+            initialState, X_COEFFS, Y_COEFFS, isDifferential=True)
         # apply speed
         vx, vy, w = list(np.array(controlMPC.full()).flatten()
                          )  # TODO: move into class
         self.omnirobot_proxy.setSpeedBase(vx, vy, w)
 
         # print(f"Time Elapsed = {time() - tic}")
-        print(f"Initial state: {initialState}")
+        # print(f"Initial state: {initialState}")
         #print(f"controlState: {controlState}")
-        print(f"Vx: {vx:.2f}, Vy: {vy:.2f}, W: {w:.2f}")
+        # print(f"Vx: {vx:.2f}, Vy: {vy:.2f}, W: {w:.2f}")
 
         return True
 
