@@ -1,5 +1,6 @@
 # Optimizer
-### GSoC'21 RoboComp project: Simultaneous path planning and following using Model Predictive Control (SPAF)
+### GSoC'21 RoboComp project: Simultaneous path planning and following using Model Predictive Control (SPAF) 
+[Robocomp Posts](https://robocomp.github.io/web/gsoc/2021/posts/index)
 
 # Installation
 To start, we need to install the following:
