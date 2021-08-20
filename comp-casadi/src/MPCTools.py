@@ -1,7 +1,7 @@
 import casadi as ca
 from casadi import sin, cos, pi
 import numpy as np
- 
+
 ''' Parameters '''
 # Cost parameters
 Q_X = Q_Y = 5e5
@@ -11,7 +11,7 @@ Q_THETA = 1e10
 R_VX = R_VY = 1e4
 R_VPHI = 1e5
 R_VTHETA = 1e10
- 
+
 # MPC parameters
 SAMPLING_TIME = 0.5       # time between steps in seconds
 N = 100                   # number of look ahead steps
@@ -39,7 +39,7 @@ VTHETA_MAX = 2                # Unitless
 
 ''' Path Tracking '''
 
-# |-------|
+# ---------
 # |       |
 # |       |
 # x       |
@@ -54,7 +54,7 @@ POINTS = np.array([
     [1750, 1750,  0],
     [1750,    0,  0],
     [1750,-1750,  0],
-    [   0,-1750,  0],
+    [   0,-1750,  0]
 ])
 
 NUM_POINTS = POINTS.shape[0]
