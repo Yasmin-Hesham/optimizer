@@ -173,7 +173,7 @@ C++ has more privileges than Python in the performance. It will be better to use
 No words can describe how grateful I am for getting through such an amazing experience. It was a great honor to participate in GSoC with Robocomp under the supervision of my mentors. I'm thankful for their guidance and support. This topic is challenging; however, I really enjoyed learning, reading articles, and implementing the equations in code. 
 
 # References
-- All mathematical equations used in this project are included in this [paper](https://www.overleaf.com/project/60d59adc32dbeb61c43a3775)
+- All mathematical equations used in this project are included in this [paper](https://www.overleaf.com/read/pqyzhvwmxnmf)
 - [Robocomp Tutorials](https://github.com/robocomp/robocomp/blob/development/doc/README.md) for better understanding of the components
 - Model Predictive Control: Theory, Computation, and Design (2nd Edition)
 - [MPC Lectures by Dr. Mohamed Mehrez](https://www.youtube.com/watch?v=RrnkPrcpyEA&list=PLK8squHT_Uzej3UCUHjtOtm5X7pMFSgAL)
